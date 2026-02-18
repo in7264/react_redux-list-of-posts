@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useState } from 'react';
 import { Loader } from './Loader';
 import { NewCommentForm } from './NewCommentForm';
@@ -8,9 +6,10 @@ import * as commentsApi from '../api/comments';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import {
   addComment,
-  commentsSlice,
   deleteSomeComment,
   setComments,
+  setError,
+  setLoaded,
 } from '../features/comments/commentsSlice';
 import { CommentData } from '../types/Comment';
 
@@ -21,91 +20,60 @@ export const PostDetails = () => {
   const loaded = useAppSelector(state => state.comments.loaded);
   const hasError = useAppSelector(state => state.comments.hasError);
 
+  const [visible, setVisible] = useState(false);
+  const postId = post?.id;
+
+  useEffect(() => {
+    if (!postId) {
+      return;
+    }
+
+    const loadComments = async () => {
+      dispatch(setLoaded(false));
+      dispatch(setError(false));
+      setVisible(false);
+
+      try {
+        const commentsFromApi = await commentsApi.getPostComments(postId);
+
+        dispatch(setComments(commentsFromApi));
+      } catch {
+        dispatch(setError(true));
+      } finally {
+        dispatch(setLoaded(true));
+      }
+    };
+
+    loadComments();
+  }, [dispatch, postId]);
+
   if (!post) {
     return <Loader />;
   }
 
-  const postId = post.id;
-
-  const [visible, setVisible] = useState(false);
-
-  function loadComments() {
-    dispatch(commentsSlice.actions.setLoaded(false));
-    dispatch(commentsSlice.actions.setError(false));
-    setVisible(false);
-
-    commentsApi
-      .getPostComments(postId)
-      .then(commentsFromApi => {
-        dispatch(setComments(commentsFromApi));
-      })
-      .catch(() => dispatch(commentsSlice.actions.setError(true)))
-      .finally(() => dispatch(commentsSlice.actions.setLoaded(true)));
-  }
-
-  const handleAddComment = async ({ name, email, body }: CommentData) => {
-    try {
-      await dispatch(
-        addComment({
-          name,
-          email,
-          body,
-          postId: postId,
-        }),
-      );
-
-      // setComments([...comments, newComment]);
-      // works wrong if we wrap `addComment` with `useCallback`
-      // because it takes the `comments` cached during the first render
-      // not the actual ones
-    } catch (error) {
-      // we show an error message in case of any error
-      dispatch(commentsSlice.actions.setError(true));
+  const handleAddComment = async ({
+    name,
+    email,
+    body,
+  }: CommentData): Promise<void> => {
+    if (!postId) {
+      return; // okay, void
     }
-  };
-
-  useEffect(() => {
-    loadComments();
-  }, [dispatch, postId]);
-
-  // The same useEffect with async/await
-  /*
-  async function loadComments() {
-    setLoaded(false);
-    setVisible(false);
-    setError(false);
 
     try {
-      const commentsFromServer = await commentsApi.getPostComments(post.id);
-
-      setComments(commentsFromServer);
-    } catch (error) {
-      setError(true);
-    } finally {
-      setLoaded(true);
+      await dispatch(addComment({ name, email, body, postId })).unwrap();
+    } catch {
+      dispatch(setError(true));
     }
   };
-
-  useEffect(() => {
-    loadComments();
-  }, []);
-
-  useEffect(loadComments, [post.id]); // Wrong!
-  // effect can return only a function but not a Promise
-  */
 
   const deleteComment = async (commentId: number) => {
-    // remove immediately using the comments from the component
-    dispatch(
-      commentsSlice.actions.setComments(
-        comments.filter(c => c.id !== commentId),
-      ),
-    );
+    dispatch(setComments(comments.filter(c => c.id !== commentId)));
 
     try {
       await dispatch(deleteSomeComment(commentId));
-    } catch (error) {
-      dispatch(commentsSlice.actions.setError(true));
+    } catch {
+      dispatch(setError(true));
     }
   };
 
@@ -113,7 +81,6 @@ export const PostDetails = () => {
     <div className="content" data-cy="PostDetails">
       <div className="block">
         <h2 data-cy="PostTitle">{`#${postId}: ${post.title}`}</h2>
-
         <p data-cy="PostBody">{post.body}</p>
       </div>
 
@@ -135,7 +102,6 @@ export const PostDetails = () => {
         {loaded && !hasError && comments.length > 0 && (
           <>
             <p className="title is-4">Comments:</p>
-
             {comments.map(comment => (
               <article
                 className="message is-small"
@@ -146,7 +112,6 @@ export const PostDetails = () => {
                   <a href={`mailto:${comment.email}`} data-cy="CommentAuthor">
                     {comment.name}
                   </a>
-
                   <button
                     data-cy="CommentDelete"
                     type="button"
@@ -157,7 +122,6 @@ export const PostDetails = () => {
                     delete button
                   </button>
                 </div>
-
                 <div className="message-body" data-cy="CommentBody">
                   {comment.body}
                 </div>

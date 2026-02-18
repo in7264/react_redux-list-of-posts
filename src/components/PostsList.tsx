@@ -1,9 +1,8 @@
-/* eslint-disable max-len */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 
 import classNames from 'classnames';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { selecterdPostSlice } from '../features/selectedPost/selectedPostSlicer';
+import { cleanPost, setPost } from '../features/selectedPost/selectedPostSlice';
 
 export const PostsList = () => {
   const dispatch = useAppDispatch();
@@ -38,9 +37,9 @@ export const PostsList = () => {
                   })}
                   onClick={() => {
                     if (post.id === selectedPost?.id) {
-                      dispatch(selecterdPostSlice.actions.cleanPost());
+                      dispatch(cleanPost());
                     } else {
-                      dispatch(selecterdPostSlice.actions.setPost(post));
+                      dispatch(setPost(post));
                     }
                   }}
                 >

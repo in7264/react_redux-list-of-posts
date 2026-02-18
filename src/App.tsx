@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable max-len */
 import React, { useEffect } from 'react';
 import classNames from 'classnames';
 
@@ -13,8 +11,13 @@ import { UserSelector } from './components/UserSelector';
 import { Loader } from './components/Loader';
 import { getUserPosts } from './api/posts';
 import { useAppDispatch, useAppSelector } from './app/hooks';
-import { postsSlice } from './features/posts/postsSlice';
-import { selecterdPostSlice } from './features/selectedPost/selectedPostSlicer';
+import {
+  cleanPosts,
+  setError,
+  setLoaded,
+  setPosts,
+} from './features/posts/postsSlice';
+import { cleanPost } from './features/selectedPost/selectedPostSlice';
 
 export const App: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -24,26 +27,29 @@ export const App: React.FC = () => {
   const loaded = useAppSelector(state => state.posts.loaded);
   const hasError = useAppSelector(state => state.posts.hasError);
 
-  function loadUserPosts(userId: number) {
-    dispatch(postsSlice.actions.setLoaded(false));
-    dispatch(postsSlice.actions.setError(false));
-    dispatch(postsSlice.actions.setPosts([]));
-
-    getUserPosts(userId)
-      .then(postsUser => {
-        dispatch(postsSlice.actions.setPosts(postsUser));
-      })
-      .catch(() => dispatch(postsSlice.actions.setError(true)))
-      .finally(() => dispatch(postsSlice.actions.setLoaded(true)));
-  }
-
   useEffect(() => {
-    dispatch(selecterdPostSlice.actions.cleanPost());
+    dispatch(cleanPost());
 
     if (author) {
+      const loadUserPosts = async (userId: number) => {
+        dispatch(setLoaded(false));
+        dispatch(setError(false));
+        dispatch(setPosts([]));
+
+        try {
+          const postsUser = await getUserPosts(userId);
+
+          dispatch(setPosts(postsUser));
+        } catch {
+          dispatch(setError(true));
+        } finally {
+          dispatch(setLoaded(true));
+        }
+      };
+
       loadUserPosts(author.id);
     } else {
-      dispatch(postsSlice.actions.cleanPosts());
+      dispatch(cleanPosts());
     }
   }, [author, dispatch]);
 

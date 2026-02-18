@@ -14,7 +14,7 @@ export const initialState: PostState = {
   hasError: false,
 };
 
-export const selecterdPostSlice = createSlice({
+export const selectedPostSlice = createSlice({
   name: 'selectedPost',
   initialState,
   reducers: {
@@ -27,4 +27,5 @@ export const selecterdPostSlice = createSlice({
   },
 });
 
-export default selecterdPostSlice.reducer;
+export default selectedPostSlice.reducer;
+export const { setPost, cleanPost } = selectedPostSlice.actions;
