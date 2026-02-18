@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useState } from 'react';
 import { Loader } from './Loader';
@@ -63,7 +64,9 @@ export const PostDetails = () => {
     }
   };
 
-  useEffect(loadComments, [dispatch, postId]);
+  useEffect(() => {
+    loadComments();
+  }, [dispatch, postId]);
 
   // The same useEffect with async/await
   /*
@@ -92,18 +95,16 @@ export const PostDetails = () => {
   */
 
   const deleteComment = async (commentId: number) => {
-    // we delete the comment immediately so as
-    // not to make the user wait long for the actual deletion
-    // eslint-disable-next-line max-len
+    // remove immediately using the comments from the component
+    dispatch(
+      commentsSlice.actions.setComments(
+        comments.filter(c => c.id !== commentId),
+      ),
+    );
+
     try {
       await dispatch(deleteSomeComment(commentId));
-
-      // setComments([...comments, newComment]);
-      // works wrong if we wrap `addComment` with `useCallback`
-      // because it takes the `comments` cached during the first render
-      // not the actual ones
     } catch (error) {
-      // we show an error message in case of any error
       dispatch(commentsSlice.actions.setError(true));
     }
   };

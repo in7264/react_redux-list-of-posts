@@ -8,7 +8,7 @@ import { selecterdPostSlice } from '../features/selectedPost/selectedPostSlicer'
 export const PostsList = () => {
   const dispatch = useAppDispatch();
 
-  const posts = useAppSelector(state => state.posts.posts);
+  const posts = useAppSelector(state => state.posts.items);
   const selectedPost = useAppSelector(state => state.selectedPost.selectedPost);
 
   return (
@@ -37,7 +37,11 @@ export const PostsList = () => {
                     'is-light': post.id !== selectedPost?.id,
                   })}
                   onClick={() => {
-                    dispatch(selecterdPostSlice.actions.setPost(post));
+                    if (post.id === selectedPost?.id) {
+                      dispatch(selecterdPostSlice.actions.cleanPost());
+                    } else {
+                      dispatch(selecterdPostSlice.actions.setPost(post));
+                    }
                   }}
                 >
                   {post.id === selectedPost?.id ? 'Close' : 'Open'}

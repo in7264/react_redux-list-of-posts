@@ -13,7 +13,7 @@ import { UserSelector } from './components/UserSelector';
 import { Loader } from './components/Loader';
 import { getUserPosts } from './api/posts';
 import { useAppDispatch, useAppSelector } from './app/hooks';
-import { loadPosts, postsSlice } from './features/posts/postsSlice';
+import { postsSlice } from './features/posts/postsSlice';
 import { selecterdPostSlice } from './features/selectedPost/selectedPostSlicer';
 
 export const App: React.FC = () => {
@@ -24,12 +24,11 @@ export const App: React.FC = () => {
   const loaded = useAppSelector(state => state.posts.loaded);
   const hasError = useAppSelector(state => state.posts.hasError);
 
-  useEffect(() => {
-    dispatch(loadPosts());
-  }, [dispatch]);
-
   function loadUserPosts(userId: number) {
+    dispatch(postsSlice.actions.setLoaded(false));
+    dispatch(postsSlice.actions.setError(false));
     dispatch(postsSlice.actions.setPosts([]));
+
     getUserPosts(userId)
       .then(postsUser => {
         dispatch(postsSlice.actions.setPosts(postsUser));
